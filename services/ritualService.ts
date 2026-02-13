@@ -14,6 +14,7 @@ export interface RitualResponse {
   images: string[];
   archetype: string;
   divergence_mode: string;
+  character_description?: string;
   isComplete?: boolean;
   timestamp: number;
   status: RitualStatus;
@@ -32,23 +33,29 @@ You generate a complete 5-page comic story as a JSON package.
 
 OUTPUT:
 - Output ONLY valid JSON.
+- No markdown formatting.
 
 STORY STRUCTURE:
 - Exactly 5 pages.
-- Total word count between 700 and 800 (target 750).
-- Vocabulary level 8/10. Clear, adult, readable, cinematic noir.
+- TOTAL WORD COUNT: 750-850 words. (approx 150-170 words per page).
+- This is a reading ritual. Do not be brief. be descriptive and atmospheric.
 - Page flow: Setup -> Reveal -> Conflict -> Shift -> Ending.
-- No moral lectures. No alternate endings.
 
-VISUAL INSTRUCTIONS (PER PAGE):
-- Include an 'image_prompt' for each page.
-- Style: Hand-drawn comic panel, ink noir or cel fracture.
-- NO cinematic/photorealistic terms.
-- Focus on silhouettes, high contrast, hard shadows.
+LANGUAGE & TONE:
+- Style: Hardboiled 1940s Detective Noir mixed with subtle Analog-Retro-Futurism.
+- Vocabulary: Use vintage noir slang (shadows, smoke, rain, dame, heater, gin) blended with gritty, clunky analog tech (magnetic tapes, cathode tubes, static).
+- AVOID: Modern cyberpunk slang (netrunner, cyberspace, hologram, nanobots). Keep it grounded, physical, and dirty.
+- Sentences: Punchy, cynical, world-weary.
 
-UNIQUENESS:
-- Never repeat the same opening situation.
-- Vary the setting and threat.
+VISUAL INSTRUCTIONS:
+- Define a 'character_description' for the protagonist.
+  - MUST BE UNIQUE for every story. Never use a generic "Detective". Give them a specific flaw or physical trait (e.g., "A PI with a robotic arm wrapped in bandages", "An ex-cop with eyes replaced by camera shutters").
+- For each page, provide an 'image_prompt' describing the scene action involving this character.
+- Focus on: High contrast, silhouettes, hard shadows, single dramatic light source.
+
+UNIQUENESS PROTOCOL:
+- CRITICAL: Do not repeat the same opening scene (e.g., "raining in the city") if possible. Start in a bar, a subway, a morgue, a diner.
+- Vary the threat: It shouldn't always be a "corporate conspiracy". It could be a missing android, a stolen memory, a love affair gone wrong.
 `;
 
 const RESPONSE_SCHEMA: Schema = {
@@ -59,6 +66,7 @@ const RESPONSE_SCHEMA: Schema = {
     location: { type: Type.STRING },
     archetype: { type: Type.STRING },
     divergence_mode: { type: Type.STRING },
+    character_description: { type: Type.STRING, description: "A detailed visual description of the main character to ensure consistency across panels." },
     pages: {
       type: Type.ARRAY,
       items: {
@@ -75,7 +83,7 @@ const RESPONSE_SCHEMA: Schema = {
       }
     }
   },
-  required: ["title", "pages"]
+  required: ["title", "pages", "character_description"]
 };
 
 export const normalizeImageSrc = (input: unknown): string | null => {
@@ -95,13 +103,33 @@ export const abortRitual = () => {
   diag("ABORTING ACTIVE SIGNAL PROCESS");
 };
 
-const generateImagesForStory = async (ai: GoogleGenAI, pages: any[]): Promise<string[]> => {
-  const images: string[] = [];
+// Visual Synthesis Engine Rules
+// Explicitly mentioning the hex code #76F3FF and 'cyan' to enforce the app aesthetic.
+const STYLE_TOKENS = "Sin City graphic novel style, Frank Miller aesthetic, extreme high contrast, heavy black ink, stark white, spot color glowing cyan #76F3FF, noir atmosphere, masterpiece, detailed line art, hard shadows";
+const NEGATIVE_PROMPT = "border, white frame, picture frame, margin, gutter, split panel, multiple panels, speech bubble, text, watermark, logo, brand, celebrity, nude, child, color gradient, soft lighting, orange, red, yellow, green, purple, sepia, greyscale, blurry, photograph, photorealistic, 3d render, distorted anatomy, chibi, big head, cartoon proportions";
+
+const generateImagesForStory = async (ai: GoogleGenAI, pages: any[], characterDesc: string, onStatus?: (status: string) => void): Promise<string[]> => {
   
-  // Sequential generation to avoid rate limits and ensure order
-  for (const page of pages) {
+  if (onStatus) onStatus("RENDERING VISUALS (0/5)");
+
+  const generatePageImage = async (page: any, index: number): Promise<string> => {
     try {
-      const prompt = `Comic panel art. ${page.image_prompt}. Style: High contrast noir, ink lines, flat colors. No text in image.`;
+      // Structured prompt to enforce consistency and style
+      const prompt = `
+        full bleed comic panel illustration, no border.
+        
+        CHARACTER: ${characterDesc}
+        ACTION: ${page.image_prompt}
+        
+        STYLE RULES:
+        1. ART STYLE: ${STYLE_TOKENS}
+        2. COLOR PALETTE: Strictly Black, White, and Photon Cyan (#76F3FF). NO other colors.
+        3. LIGHTING: Chiaroscuro, hard shadows, rim lighting.
+        4. COMPOSITION: Cinematic framing, comic book dynamic.
+        5. SCALE & ANATOMY: Realistic proportions. Objects and characters must obey real-world physics and scale. No distorted heads or limbs.
+        
+        Exclude: ${NEGATIVE_PROMPT}
+      `;
       
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-image-preview',
@@ -116,29 +144,30 @@ const generateImagesForStory = async (ai: GoogleGenAI, pages: any[]): Promise<st
         }
       });
 
-      let foundImage = false;
+      if (onStatus) onStatus(`RENDERING VISUALS (${index + 1}/5)`);
+
       if (response.candidates?.[0]?.content?.parts) {
         for (const part of response.candidates[0].content.parts) {
           if (part.inlineData && part.inlineData.data) {
-            images.push(`data:${part.inlineData.mimeType};base64,${part.inlineData.data}`);
-            foundImage = true;
-            break;
+            return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
           }
         }
       }
-      
-      if (!foundImage) {
-        images.push(''); // Fallback handled by UI
-      }
+      return '';
     } catch (e) {
       console.error("Image gen failed for page", page.page_number, e);
-      images.push('');
+      return '';
     }
-  }
+  };
+
+  // Parallel execution for speed
+  const imagePromises = pages.map((page, index) => generatePageImage(page, index));
+  const images = await Promise.all(imagePromises);
+  
   return images;
 };
 
-export const generateStorySession = async (requestId?: string): Promise<RitualResponse> => {
+export const generateStorySession = async (requestId?: string, onStatus?: (status: string) => void): Promise<RitualResponse> => {
   const nonce = requestId || crypto.randomUUID();
   const now = Date.now();
 
@@ -147,18 +176,24 @@ export const generateStorySession = async (requestId?: string): Promise<RitualRe
   }
 
   try {
+    if (onStatus) onStatus("ESTABLISHING NEURAL UPLINK");
     diag("Initiating Neural Uplink...");
     const apiKey = process.env.API_KEY;
     if (!apiKey) throw new Error("API_KEY_MISSING");
 
     const ai = new GoogleGenAI({ apiKey });
     
-    // 1. Generate Story Text
+    // 1. Generate Story Text + Character Sheet
+    if (onStatus) onStatus("DECODING NARRATIVE STREAM");
+    
     const storyPrompt = `
       Generate a new NOIRVRS story.
       Seed: ${nonce}
-      Genre: Tech-Noir / Cyber-Noir
-      Tone: Melancholy, gritty, tense.
+      Genre: Vintage Hardboiled Noir / Retro-Future
+      Tone: Melancholy, gritty, tense, analog.
+      
+      Constraint: GENERATE A NEW, UNIQUE PROTAGONIST. Do not use a generic detective.
+      Constraint: GENERATE A UNIQUE OPENING SCENE.
     `;
 
     const storyResponse = await ai.models.generateContent({
@@ -168,17 +203,20 @@ export const generateStorySession = async (requestId?: string): Promise<RitualRe
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
         responseSchema: RESPONSE_SCHEMA,
-        temperature: 0.8,
+        temperature: 0.9, // Higher temp for more variety
       },
     });
 
     const storyJson = storyResponse.text ? JSON.parse(storyResponse.text) : null;
     if (!storyJson) throw new Error("VOID_RESPONSE");
 
-    diag("Story Acquired. Visualizing...");
+    const characterDesc = storyJson.character_description || "A silhouette of a detective in a trenchcoat";
+    diag("Story Acquired. Character Identity: " + characterDesc);
 
-    // 2. Generate Images
-    const images = await generateImagesForStory(ai, storyJson.pages);
+    // 2. Generate Images (Parallel) with Character Consistency
+    const images = await generateImagesForStory(ai, storyJson.pages, characterDesc, onStatus);
+
+    if (onStatus) onStatus("FINALIZING CASE FILE");
 
     // 3. Update Profile & Return
     const profile = getLocalProfile();
@@ -199,6 +237,7 @@ export const generateStorySession = async (requestId?: string): Promise<RitualRe
       title: storyJson.title,
       archetype: storyJson.archetype,
       divergence_mode: storyJson.divergence_mode,
+      character_description: characterDesc,
       pages: pages,
       images: images,
       timestamp: now,
@@ -235,6 +274,7 @@ const mockFlow = async (nonce: string, now: number): Promise<RitualResponse> => 
       title: "CASE " + response.case_id.slice(-6), 
       archetype: "Neon Noir", 
       divergence_mode: "Simulation",
+      character_description: "Mock Detective",
       pages: pages,
       images: normalizedImages,
       timestamp: now,

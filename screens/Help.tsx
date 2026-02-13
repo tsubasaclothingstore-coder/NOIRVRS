@@ -1,38 +1,42 @@
-
 import React from 'react';
 
 const Help: React.FC = () => {
   const faqs = [
-    { q: "What is NOIRVRS?", a: "A daily noir comic experience. One story, five pages, 750 words, every night at 21:00." },
-    { q: "Can I read past stories?", a: "NOIRVRS is ephemeral. Each story exists for 24 hours only. Read it or miss it." },
-    { q: "How does the trial work?", a: "Seven days of full access. After that, you can only see Page 1 of any story without a subscription." }
+    { q: "System Protocol", a: "NOIRVRS is a generative narrative engine. Each 'Thread' you spend synthesizes a unique, 5-page interactive noir comic in real-time. No two stories are ever the same." },
+    { q: "Thread Allocation", a: "Threads are decryption credits. One Thread = One Story. \n• Free: 4 Threads / month\n• Pro: 40 Threads / month\n• Premium: 60 Threads / month" },
+    { q: "Case Archives", a: "Completed cases are logged in your profile stats. The narrative is ephemeral; once a case is closed, the city moves on. Focus on the investigation at hand." },
+    { q: "Visual Synthesis", a: "Imagery is generated live using neural interpretation of the text. Visual fidelity depends on signal strength." }
   ];
 
   return (
-    <div className="px-8 max-w-md mx-auto space-y-12">
+    <div className="px-8 max-w-md mx-auto space-y-12 animate-in fade-in duration-500">
       <section>
-        <p className="text-[10px] uppercase tracking-[0.3em] text-[#76F3FF] mb-2">Protocol</p>
-        <h2 className="text-3xl font-light tracking-tight">Manual & Info</h2>
+        <p className="text-[10px] uppercase tracking-[0.3em] text-[#76F3FF] mb-2">Protocol Manual</p>
+        <h2 className="text-3xl font-light tracking-tight">System Info</h2>
       </section>
 
-      <section className="space-y-8">
+      <section className="space-y-10">
         {faqs.map((f, i) => (
-          <div key={i} className="space-y-2">
-            <h4 className="text-sm font-bold uppercase tracking-widest text-white/90">{f.q}</h4>
-            <p className="text-sm text-white/40 leading-relaxed font-light">{f.a}</p>
+          <div key={i} className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-[#76F3FF]">{f.q}</h4>
+            <p className="text-sm text-white/60 leading-relaxed font-light whitespace-pre-line">{f.a}</p>
           </div>
         ))}
       </section>
 
       <section className="pt-8 space-y-4 border-t border-white/5">
         <p className="text-[10px] uppercase tracking-widest opacity-40">Contact Command</p>
-        <p className="text-sm">support@noirvrs.com</p>
+        <p className="text-sm mono">signal@noirvrs.com</p>
         <div className="flex gap-6 pt-4">
-          <span className="text-[10px] uppercase tracking-widest opacity-40 hover:opacity-100 cursor-pointer">Terms</span>
-          <span className="text-[10px] uppercase tracking-widest opacity-40 hover:opacity-100 cursor-pointer">Privacy</span>
-          <span className="text-[10px] uppercase tracking-widest opacity-40 hover:opacity-100 cursor-pointer">Twitter</span>
+          <span className="text-[10px] uppercase tracking-widest opacity-40 hover:opacity-100 cursor-pointer transition-opacity">Terms</span>
+          <span className="text-[10px] uppercase tracking-widest opacity-40 hover:opacity-100 cursor-pointer transition-opacity">Privacy</span>
+          <span className="text-[10px] uppercase tracking-widest opacity-40 hover:opacity-100 cursor-pointer transition-opacity">Network</span>
         </div>
       </section>
+      
+      <div className="text-center pt-8">
+         <p className="text-[8px] uppercase tracking-[0.5em] opacity-20">NOIRVRS_SYSTEM_V1.0</p>
+      </div>
     </div>
   );
 };
