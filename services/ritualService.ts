@@ -49,7 +49,7 @@ GENRE & TONE:
 - Language: Accessible crime-drama prose. Punchy and hard-hitting.
 
 VISUAL INSTRUCTIONS:
-- Define 'character_description': A specific visual description of the protagonist. MUST BE UNIQUE every time.
+- Define 'character_description': A VERY SPECIFIC visual description of the protagonist. Include HAIR COLOR/STYLE, SPECIFIC CLOTHING (e.g. "red tie", "trenchcoat"), and DISTINCTIVE FEATURES (e.g. "scar on left cheek", "cybernetic arm").
 - For each page, provide an 'image_prompt' describing the scene action.
 - CRITICAL: Images must be WORDLESS. Do not describe signs, letters, or spoken words in the image prompt.
 
@@ -67,7 +67,7 @@ const RESPONSE_SCHEMA: Schema = {
     location: { type: Type.STRING },
     archetype: { type: Type.STRING },
     divergence_mode: { type: Type.STRING },
-    character_description: { type: Type.STRING, description: "A detailed visual description of the main character (Age 25-45)." },
+    character_description: { type: Type.STRING, description: "A detailed visual description of the main character including hair, clothes, and features. (Age 25-45)." },
     pages: {
       type: Type.ARRAY,
       items: {
@@ -99,6 +99,18 @@ const ATMOSPHERES = [
   "High Rise Penthouse (Sterile, Cold, Windy)",
   "Heavy Snowfall (Silence, Whiteout)",
   "Chemical Ash Fall (Grey, Flaking)"
+];
+
+// List of opening scenarios to prevent "Rooftop" cliché
+const OPENING_SCENARIOS = [
+  "IN_MEDIA_RES_ACTION: Mid-chase or mid-fight in a tight space.",
+  "FORENSIC_INVESTIGATION: Kneeling next to evidence at ground level.",
+  "TRANSIT: Riding a crowded subway or futuristic maglev train.",
+  "SOCIAL_INFILTRATION: Sitting at a bar or club counter, blending in.",
+  "VEHICULAR: Inside a vehicle driving fast, interior shot.",
+  "INTERROGATION: Sitting across a table from a suspect in a small room.",
+  "BREAK_IN: Hacking a terminal or lockpicking a door.",
+  "WAKING_UP: Disoriented in a safehouse or apartment."
 ];
 
 export const normalizeImageSrc = (input: unknown): string | null => {
@@ -134,11 +146,13 @@ const generateImagesForStory = async (
 
   const generatePageImage = async (page: any, index: number): Promise<string> => {
     try {
+      // We prepend the character description to ensure consistency
       const prompt = `
         full bleed comic panel illustration, no border.
         
-        CHARACTER: ${characterDesc}
-        ACTION: ${page.image_prompt}
+        VISUAL SUBJECT (KEEP CONSISTENT): ${characterDesc}
+        
+        CURRENT SCENE ACTION: ${page.image_prompt}
         
         STYLE RULES:
         1. ART STYLE: ${STYLE_TOKENS}
@@ -215,8 +229,9 @@ export const generateStorySession = async (
     
     if (signal?.aborted) throw new Error("ABORTED");
 
-    // Select random atmosphere
+    // Select random atmosphere and opening scenario
     const atmosphere = ATMOSPHERES[Math.floor(Math.random() * ATMOSPHERES.length)];
+    const openingScenario = OPENING_SCENARIOS[Math.floor(Math.random() * OPENING_SCENARIOS.length)];
 
     const storyPrompt = `
       Generate a new NOIRVRS story.
@@ -226,10 +241,14 @@ export const generateStorySession = async (
       MANDATORY SETTING CONSTRAINTS:
       1. ATMOSPHERE: ${atmosphere}.
       2. TIME: NIGHT (Always).
-      3. AVOID: Do NOT use "Rain" unless the chosen atmosphere explicitly mentions it.
+      3. OPENING SCENE TYPE: ${openingScenario}.
+      
+      CRITICAL INSTRUCTIONS:
+      - The first scene MUST MATCH the OPENING SCENE TYPE.
+      - DO NOT start the story with a character standing on a rooftop or balcony unless the opening type explicitly demands it (unlikely).
+      - AVOID "Rain" unless the atmosphere is "Oppressive Humidity" or "Stifling Heatwave" (ironic) or explicitly demands it.
       
       Constraint: GENERATE A NEW, UNIQUE PROTAGONIST (Age 20s-40s).
-      Constraint: GENERATE A UNIQUE OPENING SCENE based on the atmosphere.
     `;
 
     const storyResponse = await ai.models.generateContent({
@@ -239,7 +258,7 @@ export const generateStorySession = async (
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
         responseSchema: RESPONSE_SCHEMA,
-        temperature: 1.0, // Increased for more variety
+        temperature: 1.0, 
       },
     });
 
