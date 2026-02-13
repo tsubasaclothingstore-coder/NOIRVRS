@@ -1,4 +1,6 @@
 
+export const USE_MOCK_BACKEND = true;
+
 export const COLORS = {
   bg: '#0A0A0A',
   text: '#F2F2F2',

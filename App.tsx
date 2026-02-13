@@ -1,9 +1,9 @@
-
-import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { getLocalProfile } from './services/ritualService';
 import { authService, AuthSession } from './services/authService';
 import { UserProfile } from './types';
+import { AuthContext, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import Landing from './screens/Landing';
 import Reader from './screens/Reader';
@@ -11,28 +11,6 @@ import ProfileScreen from './screens/Profile';
 import Subscribe from './screens/Subscribe';
 import Help from './screens/Help';
 import Auth from './screens/Auth';
-
-interface AuthContextType {
-  user: AuthSession | null;
-  profile: UserProfile | null;
-  loading: boolean;
-  error: string | null;
-  retry: () => void;
-  signOut: () => Promise<void>;
-  refreshAuth: () => void;
-}
-
-const AuthContext = createContext<AuthContextType>({ 
-  user: null, 
-  profile: null, 
-  loading: true, 
-  error: null,
-  retry: () => {},
-  signOut: async () => {},
-  refreshAuth: () => {}
-});
-
-export const useAuth = () => useContext(AuthContext);
 
 /**
  * ProtectedRoute component to guard routes that require authentication.
@@ -108,7 +86,7 @@ const App: React.FC = () => {
           <Routes>
             <Route path="/auth" element={user ? <Navigate to="/" replace /> : <Auth />} />
             <Route path="/" element={<ProtectedRoute><Landing /></ProtectedRoute>} />
-            <Route path="/reader" element={<Navigate to="/reader/current" replace />} />
+            <Route path="/reader" element={<Navigate to="/reader/new" replace />} />
             <Route path="/reader/:caseId" element={<ProtectedRoute><Reader /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
             <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
@@ -121,4 +99,5 @@ const App: React.FC = () => {
   );
 };
 
+export { useAuth }; // Re-export for convenience if needed, though direct import is better
 export default App;

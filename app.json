@@ -1,0 +1,20 @@
+
+{
+  "expo": {
+    "name": "NOIRVRS",
+    "slug": "noirvrs",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "entryPoint": "./index.tsx",
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    },
+    "scheme": "noirvrs",
+    "platforms": [
+      "web"
+    ]
+  }
+}
