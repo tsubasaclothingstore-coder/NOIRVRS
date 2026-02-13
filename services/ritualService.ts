@@ -35,28 +35,42 @@ OUTPUT:
 - Output ONLY valid JSON.
 - No markdown formatting.
 
-STORY STRUCTURE:
+STORY STRUCTURE (STRICT FLOW):
 - Exactly 5 pages.
 - TOTAL WORD COUNT: 750-850 words. (approx 150-170 words per page).
-- This is a reading ritual. Do not be brief. be descriptive and atmospheric.
-- Page flow: Setup -> Reveal -> Conflict -> Shift -> Ending.
+- Page 1: INTRODUCTION. Establish the heavy, vintage-futuristic atmosphere and the Protagonist's immediate situation.
+- Page 2: THE CASE. Reveal the specific mystery, tech-crime, or assignment details.
+- Page 3: PRE-CLIMAX. Rising Action. The investigation hits a critical, dangerous turning point.
+- Page 4: CLIMAX. The peak conflict. High-stakes confrontation, hacking duel, or shootout.
+- Page 5: AFTERMATH. Conclusion. The immediate fallout of the case. A moment of reflection.
 
 GENRE & TONE:
-- Genre: Neo-Noir / Urban Fantasy / Vigilante Thriller.
-- Protagonists: Vigilantes (often with subtle supernatural powers like shadow-walking, enhanced senses, kinetic blasts) OR Grit-toothed Detectives.
-- AGE: Characters must be in their PRIME (20s-40s). Do not default to "old", "retired", or "weary elder".
-- Tone: Serious, violent, dramatic, moody.
-- Language: Accessible crime-drama prose. Punchy and hard-hitting.
+- Genre: Tech-Noir / Retro-Futurism.
+- Tone: "Vintage Cool meets High Tech". Atmospheric, gritty, and human.
+- Aesthetic: Cassette Futurism. Trench coats, revolvers, CRT monitors, flying cars, neon rain.
+- Language: Raymond Chandler meets Blade Runner. Short, punchy sentences. Accessible vocabulary.
+- RULE: Avoid complex technobabble. Use simple, grounded words to describe futuristic concepts (e.g., "the drive" instead of "quantum-encrypted data storage unit", "the synthetic" instead of "biomechanical humanoid construct"). Focus on mood, action, and emotion over science.
+
+CASTING RULES (STRICT):
+1. MAX 3 MAIN CHARACTERS total (including Protagonist).
+2. DEFINE VISUALS: You must generate a 'character_roster' defining HIGHLY SPECIFIC, IMMUTABLE looks for these 3.
+   - PROTAGONIST VISUALS: Must include distinct hair, specific clothing (e.g., "battered tan trenchcoat", "mirrored visor"), and a physical trait. This description must be distinctive to ensure they look the same in every panel.
+3. EXTRAS ARE SHADOWS: Any other characters (thugs, police, crowds) MUST be described as "faceless shadows", "masked troopers", "silhouettes", or "identical androids". Do NOT give extras specific faces.
+4. NAMING PROTOCOL: 
+   - Protagonist MUST have a unique First Name and Surname. 
+   - DO NOT use generic noir names like "Jack", "John", "Vance", "Nick", "Shadow", "Raven".
+   - Use diverse, culturally distinct names suitable for a global mega-city.
+5. ROSTER CONSISTENCY: The names used in 'active_characters' for each page MUST match the names in 'character_roster'.
 
 VISUAL INSTRUCTIONS:
-- Define 'character_description': A VERY SPECIFIC visual description of the protagonist. Include HAIR COLOR/STYLE, SPECIFIC CLOTHING (e.g. "red tie", "trenchcoat"), and DISTINCTIVE FEATURES (e.g. "scar on left cheek", "cybernetic arm").
 - For each page, provide an 'image_prompt' describing the scene action.
+- List 'active_characters' for that page so the illustrator knows who to draw.
 - CRITICAL: Images must be WORDLESS. Do not describe signs, letters, or spoken words in the image prompt.
 
 UNIQUENESS PROTOCOL:
 - Never repeat the same opening scene.
-- Vary the threat: Corruption, Super-powered thugs, Cults, Heists.
-- Vary the setting: Docks, High-rises, Subways, Abandoned Labs, Mansions, Markets.
+- Vary the threat: Rogue AI, Genetic Corruption, Chrono-Thieves, Corporate Espionage, Orbital Heists.
+- Vary the setting: Docks, High-rises, Subways, Abandoned Labs, Mansions, Markets, Server Farms.
 `;
 
 const RESPONSE_SCHEMA: Schema = {
@@ -67,7 +81,18 @@ const RESPONSE_SCHEMA: Schema = {
     location: { type: Type.STRING },
     archetype: { type: Type.STRING },
     divergence_mode: { type: Type.STRING },
-    character_description: { type: Type.STRING, description: "A detailed visual description of the main character including hair, clothes, and features. (Age 25-45)." },
+    character_roster: {
+      type: Type.ARRAY,
+      description: "List of MAIN characters (Max 3). Index 0 is Protagonist.",
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          name: { type: Type.STRING },
+          visual_details: { type: Type.STRING, description: "Detailed, specific, and unique visual traits (e.g. 'Messy bun, cybernetic left arm, red leather jacket') that MUST be used in every panel." }
+        },
+        required: ["name", "visual_details"]
+      }
+    },
     pages: {
       type: Type.ARRAY,
       items: {
@@ -78,17 +103,25 @@ const RESPONSE_SCHEMA: Schema = {
           scene_summary: { type: Type.STRING },
           text: { type: Type.STRING },
           word_count_page: { type: Type.INTEGER },
+          active_characters: {
+            type: Type.ARRAY,
+            description: "Names of main characters present in this specific panel.",
+            items: { type: Type.STRING }
+          },
           image_prompt: { type: Type.STRING, description: "Detailed visual description for a comic panel illustrator. NO TEXT DESCRIPTIONS." },
         },
-        required: ["page_number", "scene_role", "text", "image_prompt"]
+        required: ["page_number", "scene_role", "text", "image_prompt", "active_characters"]
       }
     }
   },
-  required: ["title", "pages", "character_description"]
+  required: ["title", "pages", "character_roster"]
 };
 
 // List of atmospheres to enforce variety
 const ATMOSPHERES = [
+  "Electromagnetic Storm (Static, Ozone)",
+  "Neon Haze & Acid Rain (Green/Yellow tint)",
+  "Server Farm Heat (Dry, Humid, Electric buzz)",
   "Stifling Heatwave (Sweat, Haze)",
   "Freezing Fog (Mist, Breath visible)",
   "Dry & Dusty Wind (Gritty, Parched)",
@@ -97,7 +130,6 @@ const ATMOSPHERES = [
   "Industrial Smog (Thick, Oily)",
   "Underground / Subway (Claustrophobic, Artificial Light)",
   "High Rise Penthouse (Sterile, Cold, Windy)",
-  "Heavy Snowfall (Silence, Whiteout)",
   "Chemical Ash Fall (Grey, Flaking)"
 ];
 
@@ -111,6 +143,18 @@ const OPENING_SCENARIOS = [
   "INTERROGATION: Sitting across a table from a suspect in a small room.",
   "BREAK_IN: Hacking a terminal or lockpicking a door.",
   "WAKING_UP: Disoriented in a safehouse or apartment."
+];
+
+// Diversity Generators
+const GENDERS = ['Male', 'Female'];
+const BODY_TYPES = [
+  "Lean & Wiry (Runner's build)",
+  "Imposing & Muscular (Brawler's build)",
+  "Scarred & Athletic (Veteran's build)",
+  "Gaunt & Sharp (Intellectual/Hacker build)",
+  "Heavy-set & Strong (Powerlifter build)",
+  "Cybernetically Enhanced / Asymmetrical",
+  "Tall & Lanky"
 ];
 
 export const normalizeImageSrc = (input: unknown): string | null => {
@@ -131,81 +175,104 @@ export const abortRitual = () => {
 };
 
 // Visual Synthesis Engine Rules
-const STYLE_TOKENS = "Sin City graphic novel style, Frank Miller aesthetic, extreme high contrast, heavy black ink, stark white, spot color glowing cyan #76F3FF, noir atmosphere, masterpiece, detailed line art, hard shadows";
+// Updated to reflect "Vintage yet Futuristic" (Cassette Futurism/Syd Mead)
+const STYLE_TOKENS = "Retro-futuristic noir comic style, Cassette Futurism, Syd Mead aesthetic, heavy black ink, high contrast, stark white, spot color glowing cyan #76F3FF, tech-noir atmosphere, intricate machinery, wires and CRT screens, masterpiece, detailed line art, hard shadows, consistent character design";
+
 // Enhanced negative prompt to strictly ban bad anatomy and text
-const NEGATIVE_PROMPT = "disfigured, bad anatomy, dislocated limbs, extra limbs, missing limbs, floating limbs, mutated hands, extra fingers, missing fingers, fused fingers, malformed body, anatomical nonsense, bad proportions, uncoordinated body, amputation, head out of frame, cut off, split screen, text, words, speech bubble, thinking bubble, caption, label, sign, typography, letter, alphabet, watermark, logo, border, white frame, picture frame, margin, gutter, split panel, multiple panels, color gradient, soft lighting, orange, red, yellow, green, purple, sepia, greyscale, blurry, photograph, photorealistic, 3d render, distorted anatomy, elderly, wrinkles, old age";
+const NEGATIVE_PROMPT = "disfigured, bad anatomy, dislocated limbs, extra limbs, missing limbs, floating limbs, mutated hands, extra fingers, missing fingers, fused fingers, malformed body, anatomical nonsense, bad proportions, uncoordinated body, amputation, head out of frame, cut off, split screen, text, words, speech bubble, thinking bubble, caption, label, sign, typography, letter, alphabet, watermark, logo, border, white frame, picture frame, margin, gutter, split panel, multiple panels, color gradient, soft lighting, orange, red, yellow, green, purple, sepia, greyscale, blurry, photograph, photorealistic, 3d render, distorted anatomy, elderly, wrinkles, old age, morphing clothes";
 
-const generateImagesForStory = async (
-  ai: GoogleGenAI, 
-  pages: any[], 
-  characterDesc: string, 
-  onStatus?: (status: string) => void
-): Promise<string[]> => {
+/**
+ * Helper to match active characters to roster even if names are slightly different
+ */
+const findCharacterInRoster = (name: string, roster: { name: string, visual_details: string }[]) => {
+  const normalizedInput = name.toLowerCase().trim();
   
-  if (onStatus) onStatus("RENDERING VISUALS (0/5)");
+  // 1. Exact match
+  let found = roster.find(r => r.name.toLowerCase().trim() === normalizedInput);
+  if (found) return found;
 
-  const generatePageImage = async (page: any, index: number): Promise<string> => {
-    try {
-      // We prepend the character description to ensure consistency
-      const prompt = `
-        full bleed comic panel illustration, no border.
-        
-        VISUAL SUBJECT (KEEP CONSISTENT): ${characterDesc}
-        
-        CURRENT SCENE ACTION: ${page.image_prompt}
-        
-        STYLE RULES:
-        1. ART STYLE: ${STYLE_TOKENS}
-        2. COLOR PALETTE: Strictly Black, White, and Photon Cyan (#76F3FF). NO other colors.
-        3. LIGHTING: Chiaroscuro, hard shadows, rim lighting.
-        4. COMPOSITION: Cinematic framing, comic book dynamic.
-        5. SCALE & ANATOMY: Masterpiece, anatomically correct, perfect anatomy, accurate body proportions. Objects and characters must obey real-world physics and scale. No distorted heads or limbs.
-        
-        CRITICAL: DO NOT INCLUDE ANY TEXT, SPEECH BUBBLES, OR CAPTIONS.
-        
-        Exclude: ${NEGATIVE_PROMPT}
-      `;
-      
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-image-preview',
-        contents: {
-          parts: [{ text: prompt }]
-        },
-        config: {
-          imageConfig: {
-            aspectRatio: "1:1",
-            imageSize: "1K"
-          }
-        }
+  // 2. Partial match (e.g. "Vance" matching "Detective Vance")
+  found = roster.find(r => {
+    const rName = r.name.toLowerCase().trim();
+    return rName.includes(normalizedInput) || normalizedInput.includes(rName);
+  });
+  
+  return found;
+};
+
+/**
+ * Generates a single image for a specific page.
+ */
+const generatePageImage = async (
+  ai: GoogleGenAI, 
+  page: any, 
+  roster: { name: string, visual_details: string }[]
+): Promise<string> => {
+  try {
+    // Build a specific visual context for ONLY the characters in this scene
+    let characterContext = "";
+    if (page.active_characters && page.active_characters.length > 0) {
+      characterContext = "CAST IN THIS PANEL (MUST MATCH DESCRIPTIONS EXACTLY):\n";
+      page.active_characters.forEach((charName: string) => {
+        const charData = findCharacterInRoster(charName, roster);
+        const charDetails = charData ? charData.visual_details : "A shadowy figure";
+        const finalName = charData ? charData.name.toUpperCase() : charName.toUpperCase();
+        characterContext += `- ${finalName}: ${charDetails}\n`;
       });
+    }
 
-      if (onStatus) onStatus(`RENDERING VISUALS (${index + 1}/5)`);
-
-      if (response.candidates?.[0]?.content?.parts) {
-        for (const part of response.candidates[0].content.parts) {
-          if (part.inlineData && part.inlineData.data) {
-            return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-          }
+    const prompt = `
+      full bleed comic panel illustration, no border.
+      
+      ${characterContext}
+      
+      ACTION: ${page.image_prompt}
+      
+      STYLE RULES:
+      1. ART STYLE: ${STYLE_TOKENS}
+      2. COLOR PALETTE: Strictly Black, White, and Photon Cyan (#76F3FF). NO other colors.
+      3. LIGHTING: Chiaroscuro, hard shadows, rim lighting.
+      4. COMPOSITION: Cinematic framing, comic book dynamic.
+      5. SCALE & ANATOMY: Masterpiece, anatomically correct, perfect anatomy, accurate body proportions. Objects and characters must obey real-world physics and scale. No distorted heads or limbs.
+      6. CHARACTER CONSISTENCY: If a character from the CAST list is in the ACTION, they MUST match their visual description exactly.
+      
+      CRITICAL: DO NOT INCLUDE ANY TEXT, SPEECH BUBBLES, OR CAPTIONS.
+      
+      Exclude: ${NEGATIVE_PROMPT}
+    `;
+    
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-image-preview',
+      contents: {
+        parts: [{ text: prompt }]
+      },
+      config: {
+        imageConfig: {
+          aspectRatio: "1:1",
+          imageSize: "1K"
         }
       }
-      return '';
-    } catch (e) {
-      console.error("Image gen failed for page", page.page_number, e);
-      return '';
-    }
-  };
+    });
 
-  // Parallel execution for speed
-  const imagePromises = pages.map((page, index) => generatePageImage(page, index));
-  const images = await Promise.all(imagePromises);
-  
-  return images;
+    if (response.candidates?.[0]?.content?.parts) {
+      for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData && part.inlineData.data) {
+          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        }
+      }
+    }
+    return '';
+  } catch (e) {
+    console.error("Image gen failed for page", page.page_number, e);
+    return '';
+  }
 };
 
 export const generateStorySession = async (
   requestId?: string, 
   onStatus?: (status: string) => void,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  onImageResolved?: (index: number, image: string) => void
 ): Promise<RitualResponse> => {
   const nonce = requestId || crypto.randomUUID();
   const now = Date.now();
@@ -233,22 +300,34 @@ export const generateStorySession = async (
     const atmosphere = ATMOSPHERES[Math.floor(Math.random() * ATMOSPHERES.length)];
     const openingScenario = OPENING_SCENARIOS[Math.floor(Math.random() * OPENING_SCENARIOS.length)];
 
+    // Randomize Protagonist Attributes to ensure diversity
+    const pGender = GENDERS[Math.floor(Math.random() * GENDERS.length)];
+    const pAge = Math.floor(Math.random() * (45 - 20 + 1)) + 20; // 20 to 45
+    const pBodyType = BODY_TYPES[Math.floor(Math.random() * BODY_TYPES.length)];
+
     const storyPrompt = `
       Generate a new NOIRVRS story.
       Seed: ${nonce}
-      Genre: Vigilante Thriller / Neo-Noir
+      Genre: Tech-Noir / Retro-Futurism / Sci-Fi Mystery
       
       MANDATORY SETTING CONSTRAINTS:
       1. ATMOSPHERE: ${atmosphere}.
       2. TIME: NIGHT (Always).
       3. OPENING SCENE TYPE: ${openingScenario}.
       
+      MANDATORY PROTAGONIST SPECS (DO NOT DEVIATE):
+      - GENDER: ${pGender}
+      - AGE: ${pAge}
+      - BODY TYPE: ${pBodyType}
+      - NAME: MUST be a unique First & Last Name. Do not use generic names like "Jack", "Vance", "John".
+      
       CRITICAL INSTRUCTIONS:
       - The first scene MUST MATCH the OPENING SCENE TYPE.
       - DO NOT start the story with a character standing on a rooftop or balcony unless the opening type explicitly demands it (unlikely).
       - AVOID "Rain" unless the atmosphere is "Oppressive Humidity" or "Stifling Heatwave" (ironic) or explicitly demands it.
+      - LANGUAGE: Simple, punchy, hard-boiled. No complex science talk or technobabble. Focus on the mood, the action, and the mystery. Make it readable for anyone.
       
-      Constraint: GENERATE A NEW, UNIQUE PROTAGONIST (Age 20s-40s).
+      Constraint: GENERATE A NEW, UNIQUE PROTAGONIST based on the specs above.
     `;
 
     const storyResponse = await ai.models.generateContent({
@@ -265,22 +344,13 @@ export const generateStorySession = async (
     const storyJson = storyResponse.text ? JSON.parse(storyResponse.text) : null;
     if (!storyJson) throw new Error("VOID_RESPONSE");
 
-    const characterDesc = storyJson.character_description || "A silhouette of a detective";
+    // Extract Protagonist description for backward compatibility/metadata
+    const characterDesc = storyJson.character_roster?.[0]?.visual_details || "A silhouette of a detective";
+    const roster = storyJson.character_roster || [{ name: "Protagonist", visual_details: characterDesc }];
     
-    diag("Story Acquired. Character: " + characterDesc);
+    diag("Story Acquired. Roster size: " + roster.length);
 
-    // Check signal before image gen
-    if (signal?.aborted) throw new Error("ABORTED");
-
-    // 2. Generate Images (Parallel) with Character Consistency
-    const images = await generateImagesForStory(ai, storyJson.pages, characterDesc, onStatus);
-
-    if (onStatus) onStatus("FINALIZING CASE FILE");
-
-    // CRITICAL: Check signal right before deducting threads
-    if (signal?.aborted) throw new Error("ABORTED");
-
-    // 3. Update Profile & Return
+    // CRITICAL: Update Profile Threads early since we have the story
     const profile = getLocalProfile();
     updateLocalProfile({
       threads_remaining: Math.max(0, (profile.threads_remaining || 0) - 1),
@@ -288,24 +358,50 @@ export const generateStorySession = async (
       last_generation_at: now
     });
 
+    // Prepare partial response structure
     const pages: RitualPage[] = storyJson.pages.map((p: any) => ({
       page_number: p.page_number,
       text: p.text,
       image_prompt: p.image_prompt
     }));
 
-    return {
+    const partialResponse: RitualResponse = {
       id: `CASE_${now}`,
       title: storyJson.title,
       archetype: storyJson.archetype,
       divergence_mode: storyJson.divergence_mode,
       character_description: characterDesc,
       pages: pages,
-      images: images,
+      images: new Array(5).fill(''), // Placeholders
       timestamp: now,
-      status: 'COMPLETED',
+      status: 'IMAGE_GEN',
       isComplete: true
     };
+
+    // 2. Start Images Generation in Background
+    if (onStatus) onStatus("RENDERING VISUALS...");
+    
+    // Create an array of promises but don't await all of them at once
+    const imageGenPromises = storyJson.pages.map(async (page: any, index: number) => {
+       if (signal?.aborted) return;
+       const img = await generatePageImage(ai, page, roster);
+       // Notify via callback for streaming effect
+       if (onImageResolved) {
+         onImageResolved(index, img);
+       }
+       // Update local object reference (though caller likely uses callback)
+       partialResponse.images[index] = img;
+       return img;
+    });
+
+    // 3. WAIT STRATEGY: Wait only for the FIRST image to ensure the landing is not a black screen.
+    // This dramatically reduces wait time (waiting for 1 image vs 5).
+    await imageGenPromises[0];
+    partialResponse.status = 'COMPLETED';
+
+    if (onStatus) onStatus("FINALIZING CASE FILE");
+
+    return partialResponse;
 
   } catch (err: any) {
     if (err.message === 'ABORTED' || (signal?.aborted)) {

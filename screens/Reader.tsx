@@ -39,9 +39,23 @@ const Reader: React.FC = () => {
 
       try {
         const targetId = (!caseId || caseId === 'new') ? undefined : caseId;
-        const data = await generateStorySession(targetId, (status) => {
-          setLoadingStatus(status);
-        }, controller.signal);
+        
+        const data = await generateStorySession(
+            targetId, 
+            (status) => {
+              setLoadingStatus(status);
+            }, 
+            controller.signal,
+            (index, image) => {
+              // STREAMING CALLBACK: Updates state as images arrive
+              setRitualData(prev => {
+                if (!prev) return prev; // If not initialized, ignore (should be rare)
+                const newImages = [...prev.images];
+                newImages[index] = image;
+                return { ...prev, images: newImages };
+              });
+            }
+        );
         
         setRitualData(data);
         retry(); 
@@ -112,12 +126,6 @@ const Reader: React.FC = () => {
         abortControllerRef.current.abort();
     }
     abortRitual();
-    // Do not clear activeCaseId here if it was already set from a previous session,
-    // but here we are in a loading state for a new session, so clearing is fine 
-    // IF we assume we haven't committed the case yet.
-    // The service layer handles NOT setting the case ID if aborted.
-    
-    // We navigate home.
     navigate('/');
   };
 
@@ -152,7 +160,9 @@ const Reader: React.FC = () => {
   if (!ritualData) return null;
 
   const currentImage = ritualData.images[currentPage];
-  const isImageFailed = !currentImage || failedImages[currentPage];
+  // Check if image is effectively missing (empty string) OR failed to load
+  const isImageLoading = currentImage === ''; 
+  const isImageFailed = failedImages[currentPage];
 
   return (
     <div className="px-6 pb-40 max-w-2xl mx-auto animate-in fade-in duration-700">
@@ -171,7 +181,12 @@ const Reader: React.FC = () => {
       </div>
 
       <div className="aspect-square bg-zinc-950 border-0 rounded-sm overflow-hidden mb-12 relative shadow-[0_0_40px_rgba(0,0,0,1)]">
-        {isImageFailed ? (
+        {isImageLoading ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900/50">
+                <div className="w-4 h-4 border-t border-[#76F3FF] rounded-full animate-spin mb-4" />
+                <p className="text-[8px] uppercase tracking-[0.3em] opacity-30 animate-pulse">Rendering Visuals...</p>
+            </div>
+        ) : isImageFailed ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900">
              <p className="text-[8px] uppercase tracking-[0.3em] text-red-500/40 font-bold">Corrupted Signal Panel</p>
           </div>
