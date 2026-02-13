@@ -41,21 +41,21 @@ STORY STRUCTURE:
 - This is a reading ritual. Do not be brief. be descriptive and atmospheric.
 - Page flow: Setup -> Reveal -> Conflict -> Shift -> Ending.
 
-LANGUAGE & TONE:
-- Style: Hardboiled 1940s Detective Noir mixed with subtle Analog-Retro-Futurism.
-- Vocabulary: Use vintage noir slang (shadows, smoke, rain, dame, heater, gin) blended with gritty, clunky analog tech (magnetic tapes, cathode tubes, static).
-- AVOID: Modern cyberpunk slang (netrunner, cyberspace, hologram, nanobots). Keep it grounded, physical, and dirty.
-- Sentences: Punchy, cynical, world-weary.
+GENRE & TONE:
+- Genre: Neo-Noir / Urban Fantasy / Vigilante Thriller.
+- Protagonists: Vigilantes (often with subtle supernatural powers like shadow-walking, enhanced senses, kinetic blasts) OR Grit-toothed Detectives.
+- AGE: Characters must be in their PRIME (20s-40s). Do not default to "old", "retired", or "weary elder".
+- Tone: Serious, violent, dramatic, moody.
+- Language: Accessible crime-drama prose. Punchy and hard-hitting.
 
 VISUAL INSTRUCTIONS:
-- Define a 'character_description' for the protagonist.
-  - MUST BE UNIQUE for every story. Never use a generic "Detective". Give them a specific flaw or physical trait (e.g., "A PI with a robotic arm wrapped in bandages", "An ex-cop with eyes replaced by camera shutters").
-- For each page, provide an 'image_prompt' describing the scene action involving this character.
-- Focus on: High contrast, silhouettes, hard shadows, single dramatic light source.
+- Define 'character_description': A specific visual description of the protagonist. MUST BE UNIQUE every time.
+- For each page, provide an 'image_prompt' describing the scene action.
+- CRITICAL: Images must be WORDLESS. Do not describe signs, letters, or spoken words in the image prompt.
 
 UNIQUENESS PROTOCOL:
-- CRITICAL: Do not repeat the same opening scene (e.g., "raining in the city") if possible. Start in a bar, a subway, a morgue, a diner.
-- Vary the threat: It shouldn't always be a "corporate conspiracy". It could be a missing android, a stolen memory, a love affair gone wrong.
+- Never repeat the same opening scene.
+- Vary the threat: Corruption, Super-powered thugs, Cults, Heists.
 `;
 
 const RESPONSE_SCHEMA: Schema = {
@@ -66,7 +66,7 @@ const RESPONSE_SCHEMA: Schema = {
     location: { type: Type.STRING },
     archetype: { type: Type.STRING },
     divergence_mode: { type: Type.STRING },
-    character_description: { type: Type.STRING, description: "A detailed visual description of the main character to ensure consistency across panels." },
+    character_description: { type: Type.STRING, description: "A detailed visual description of the main character (Age 25-45)." },
     pages: {
       type: Type.ARRAY,
       items: {
@@ -77,7 +77,7 @@ const RESPONSE_SCHEMA: Schema = {
           scene_summary: { type: Type.STRING },
           text: { type: Type.STRING },
           word_count_page: { type: Type.INTEGER },
-          image_prompt: { type: Type.STRING, description: "Detailed visual description for a comic panel illustrator. No text." },
+          image_prompt: { type: Type.STRING, description: "Detailed visual description for a comic panel illustrator. NO TEXT DESCRIPTIONS." },
         },
         required: ["page_number", "scene_role", "text", "image_prompt"]
       }
@@ -104,17 +104,21 @@ export const abortRitual = () => {
 };
 
 // Visual Synthesis Engine Rules
-// Explicitly mentioning the hex code #76F3FF and 'cyan' to enforce the app aesthetic.
 const STYLE_TOKENS = "Sin City graphic novel style, Frank Miller aesthetic, extreme high contrast, heavy black ink, stark white, spot color glowing cyan #76F3FF, noir atmosphere, masterpiece, detailed line art, hard shadows";
-const NEGATIVE_PROMPT = "border, white frame, picture frame, margin, gutter, split panel, multiple panels, speech bubble, text, watermark, logo, brand, celebrity, nude, child, color gradient, soft lighting, orange, red, yellow, green, purple, sepia, greyscale, blurry, photograph, photorealistic, 3d render, distorted anatomy, chibi, big head, cartoon proportions";
+// Enhanced negative prompt to strictly ban bad anatomy and text
+const NEGATIVE_PROMPT = "disfigured, bad anatomy, dislocated limbs, extra limbs, missing limbs, floating limbs, mutated hands, extra fingers, missing fingers, fused fingers, malformed body, anatomical nonsense, bad proportions, uncoordinated body, amputation, head out of frame, cut off, split screen, text, words, speech bubble, thinking bubble, caption, label, sign, typography, letter, alphabet, watermark, logo, border, white frame, picture frame, margin, gutter, split panel, multiple panels, color gradient, soft lighting, orange, red, yellow, green, purple, sepia, greyscale, blurry, photograph, photorealistic, 3d render, distorted anatomy, elderly, wrinkles, old age";
 
-const generateImagesForStory = async (ai: GoogleGenAI, pages: any[], characterDesc: string, onStatus?: (status: string) => void): Promise<string[]> => {
+const generateImagesForStory = async (
+  ai: GoogleGenAI, 
+  pages: any[], 
+  characterDesc: string, 
+  onStatus?: (status: string) => void
+): Promise<string[]> => {
   
   if (onStatus) onStatus("RENDERING VISUALS (0/5)");
 
   const generatePageImage = async (page: any, index: number): Promise<string> => {
     try {
-      // Structured prompt to enforce consistency and style
       const prompt = `
         full bleed comic panel illustration, no border.
         
@@ -126,7 +130,9 @@ const generateImagesForStory = async (ai: GoogleGenAI, pages: any[], characterDe
         2. COLOR PALETTE: Strictly Black, White, and Photon Cyan (#76F3FF). NO other colors.
         3. LIGHTING: Chiaroscuro, hard shadows, rim lighting.
         4. COMPOSITION: Cinematic framing, comic book dynamic.
-        5. SCALE & ANATOMY: Realistic proportions. Objects and characters must obey real-world physics and scale. No distorted heads or limbs.
+        5. SCALE & ANATOMY: Masterpiece, anatomically correct, perfect anatomy, accurate body proportions. Objects and characters must obey real-world physics and scale. No distorted heads or limbs.
+        
+        CRITICAL: DO NOT INCLUDE ANY TEXT, SPEECH BUBBLES, OR CAPTIONS.
         
         Exclude: ${NEGATIVE_PROMPT}
       `;
@@ -167,7 +173,11 @@ const generateImagesForStory = async (ai: GoogleGenAI, pages: any[], characterDe
   return images;
 };
 
-export const generateStorySession = async (requestId?: string, onStatus?: (status: string) => void): Promise<RitualResponse> => {
+export const generateStorySession = async (
+  requestId?: string, 
+  onStatus?: (status: string) => void,
+  signal?: AbortSignal
+): Promise<RitualResponse> => {
   const nonce = requestId || crypto.randomUUID();
   const now = Date.now();
 
@@ -176,6 +186,8 @@ export const generateStorySession = async (requestId?: string, onStatus?: (statu
   }
 
   try {
+    if (signal?.aborted) throw new Error("ABORTED");
+
     if (onStatus) onStatus("ESTABLISHING NEURAL UPLINK");
     diag("Initiating Neural Uplink...");
     const apiKey = process.env.API_KEY;
@@ -186,13 +198,15 @@ export const generateStorySession = async (requestId?: string, onStatus?: (statu
     // 1. Generate Story Text + Character Sheet
     if (onStatus) onStatus("DECODING NARRATIVE STREAM");
     
+    if (signal?.aborted) throw new Error("ABORTED");
+
     const storyPrompt = `
       Generate a new NOIRVRS story.
       Seed: ${nonce}
-      Genre: Vintage Hardboiled Noir / Retro-Future
-      Tone: Melancholy, gritty, tense, analog.
+      Genre: Vigilante Thriller / Neo-Noir
+      Tone: Melancholy, gritty, tense, dramatic.
       
-      Constraint: GENERATE A NEW, UNIQUE PROTAGONIST. Do not use a generic detective.
+      Constraint: GENERATE A NEW, UNIQUE PROTAGONIST (Age 20s-40s).
       Constraint: GENERATE A UNIQUE OPENING SCENE.
     `;
 
@@ -203,20 +217,27 @@ export const generateStorySession = async (requestId?: string, onStatus?: (statu
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
         responseSchema: RESPONSE_SCHEMA,
-        temperature: 0.9, // Higher temp for more variety
+        temperature: 0.9, 
       },
     });
 
     const storyJson = storyResponse.text ? JSON.parse(storyResponse.text) : null;
     if (!storyJson) throw new Error("VOID_RESPONSE");
 
-    const characterDesc = storyJson.character_description || "A silhouette of a detective in a trenchcoat";
-    diag("Story Acquired. Character Identity: " + characterDesc);
+    const characterDesc = storyJson.character_description || "A silhouette of a detective";
+    
+    diag("Story Acquired. Character: " + characterDesc);
+
+    // Check signal before image gen
+    if (signal?.aborted) throw new Error("ABORTED");
 
     // 2. Generate Images (Parallel) with Character Consistency
     const images = await generateImagesForStory(ai, storyJson.pages, characterDesc, onStatus);
 
     if (onStatus) onStatus("FINALIZING CASE FILE");
+
+    // CRITICAL: Check signal right before deducting threads
+    if (signal?.aborted) throw new Error("ABORTED");
 
     // 3. Update Profile & Return
     const profile = getLocalProfile();
@@ -246,6 +267,10 @@ export const generateStorySession = async (requestId?: string, onStatus?: (statu
     };
 
   } catch (err: any) {
+    if (err.message === 'ABORTED' || (signal?.aborted)) {
+      diag("Process aborted by user.");
+      throw new Error("ABORTED");
+    }
     console.error("Ritual Failed", err);
     throw new Error(err.message || "SIGNAL_LOST");
   }

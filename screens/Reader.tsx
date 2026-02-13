@@ -17,6 +17,7 @@ const Reader: React.FC = () => {
   const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
   
   const processingRef = useRef<boolean>(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -32,23 +33,42 @@ const Reader: React.FC = () => {
       setIsLoadingCase(true);
       setError(null);
       processingRef.current = true;
+      
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
 
       try {
         const targetId = (!caseId || caseId === 'new') ? undefined : caseId;
         const data = await generateStorySession(targetId, (status) => {
           setLoadingStatus(status);
-        });
+        }, controller.signal);
+        
         setRitualData(data);
         retry(); 
       } catch (err: any) {
+        if (err.message === 'ABORTED') {
+           console.log("Uplink aborted by user.");
+           return; 
+        }
         setError({ code: 'SESSION_FAIL', message: err.message || "Signal Lost" });
       } finally {
-        setIsLoadingCase(false);
-        processingRef.current = false;
+        // Only turn off loading if this is still the active request
+        if (abortControllerRef.current === controller) {
+            setIsLoadingCase(false);
+            processingRef.current = false;
+            abortControllerRef.current = null;
+        }
       }
     };
 
     init();
+
+    return () => {
+        // Cleanup on unmount
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+    };
   }, [caseId, authLoading, profile?.citizenId]);
 
   const handleNext = () => {
@@ -88,9 +108,16 @@ const Reader: React.FC = () => {
   };
 
   const handleAbort = () => {
+    if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+    }
     abortRitual();
-    updateLocalProfile({ activeCaseId: undefined });
-    retry();
+    // Do not clear activeCaseId here if it was already set from a previous session,
+    // but here we are in a loading state for a new session, so clearing is fine 
+    // IF we assume we haven't committed the case yet.
+    // The service layer handles NOT setting the case ID if aborted.
+    
+    // We navigate home.
     navigate('/');
   };
 
@@ -131,7 +158,7 @@ const Reader: React.FC = () => {
     <div className="px-6 pb-40 max-w-2xl mx-auto animate-in fade-in duration-700">
       <div className="mb-8 flex justify-between items-center border-b border-white/5 pb-6">
         <button 
-          onClick={handleAbort}
+          onClick={() => navigate('/')}
           className="text-[9px] uppercase tracking-[0.3em] opacity-40 hover:opacity-100 transition-all"
         >
           ← EXIT

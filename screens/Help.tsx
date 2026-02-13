@@ -1,6 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Help: React.FC = () => {
+  const navigate = useNavigate();
+
   const faqs = [
     { q: "System Protocol", a: "NOIRVRS is a generative narrative engine. Each 'Thread' you spend synthesizes a unique, 5-page interactive noir comic in real-time. No two stories are ever the same." },
     { q: "Thread Allocation", a: "Threads are decryption credits. One Thread = One Story. \n• Free: 4 Threads / month\n• Pro: 40 Threads / month\n• Premium: 60 Threads / month" },
@@ -28,8 +31,18 @@ const Help: React.FC = () => {
         <p className="text-[10px] uppercase tracking-widest opacity-40">Contact Command</p>
         <p className="text-sm mono">signal@noirvrs.com</p>
         <div className="flex gap-6 pt-4">
-          <span className="text-[10px] uppercase tracking-widest opacity-40 hover:opacity-100 cursor-pointer transition-opacity">Terms</span>
-          <span className="text-[10px] uppercase tracking-widest opacity-40 hover:opacity-100 cursor-pointer transition-opacity">Privacy</span>
+          <button 
+            onClick={() => navigate('/legal', { state: { section: 'terms' } })}
+            className="text-[10px] uppercase tracking-widest opacity-40 hover:opacity-100 hover:text-[#76F3FF] cursor-pointer transition-all"
+          >
+            Terms
+          </button>
+          <button 
+            onClick={() => navigate('/legal', { state: { section: 'privacy' } })}
+            className="text-[10px] uppercase tracking-widest opacity-40 hover:opacity-100 hover:text-[#76F3FF] cursor-pointer transition-all"
+          >
+            Privacy
+          </button>
           <span className="text-[10px] uppercase tracking-widest opacity-40 hover:opacity-100 cursor-pointer transition-opacity">Network</span>
         </div>
       </section>

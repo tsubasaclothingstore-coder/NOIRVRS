@@ -11,6 +11,7 @@ import ProfileScreen from './screens/Profile';
 import Subscribe from './screens/Subscribe';
 import Help from './screens/Help';
 import Auth from './screens/Auth';
+import Legal from './screens/Legal';
 
 /**
  * ProtectedRoute component to guard routes that require authentication.
@@ -91,6 +92,7 @@ const App: React.FC = () => {
             <Route path="/profile" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
             <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
             <Route path="/subscribe" element={<ProtectedRoute><Subscribe /></ProtectedRoute>} />
+            <Route path="/legal" element={<ProtectedRoute><Legal /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Layout>
