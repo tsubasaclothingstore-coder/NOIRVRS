@@ -47,7 +47,7 @@ STORY STRUCTURE (STRICT FLOW):
 GENRE & TONE:
 - Genre: Tech-Noir / Retro-Futurism.
 - Tone: "Vintage Cool meets High Tech". Atmospheric, gritty, and human.
-- Aesthetic: Cassette Futurism. Trench coats, revolvers, CRT monitors, flying cars, neon rain.
+- Aesthetic: Analog-Digital Mix. Trench coats, revolvers, CRT monitors, flying cars, neon rain, bulky technology.
 - Language: Raymond Chandler meets Blade Runner. Short, punchy sentences. Accessible vocabulary.
 - RULE: Avoid complex technobabble. Use simple, grounded words to describe futuristic concepts (e.g., "the drive" instead of "quantum-encrypted data storage unit", "the synthetic" instead of "biomechanical humanoid construct"). Focus on mood, action, and emotion over science.
 
@@ -145,6 +145,22 @@ const OPENING_SCENARIOS = [
   "WAKING_UP: Disoriented in a safehouse or apartment."
 ];
 
+// Items of interest to ensure variety beyond just "Cassette Tapes"
+const MACGUFFINS = [
+  "a cracked holographic data-shard",
+  "a reeling magnetic audio tape",
+  "a biological sample in a cryo-tube",
+  "a blood-stained paper dossier",
+  "a severed android memory-core",
+  "an ancient, heavy iron key",
+  "a stolen corporate encrypted tablet",
+  "a pulsating strange artifact",
+  "a sub-dermal chip extracted from a body",
+  "a vintage floppy disk with a red label",
+  "a gold-plated pistol with one bullet",
+  "a locket containing a holographic map"
+];
+
 // Diversity Generators
 const GENDERS = ['Male', 'Female'];
 const BODY_TYPES = [
@@ -176,10 +192,11 @@ export const abortRitual = () => {
 
 // Visual Synthesis Engine Rules
 // Updated to reflect "Vintage yet Futuristic" (Cassette Futurism/Syd Mead)
-const STYLE_TOKENS = "Retro-futuristic noir comic style, Cassette Futurism, Syd Mead aesthetic, heavy black ink, high contrast, stark white, spot color glowing cyan #76F3FF, tech-noir atmosphere, intricate machinery, wires and CRT screens, masterpiece, detailed line art, hard shadows, consistent character design";
+// Added "anatomically correct hands" to Style Tokens
+const STYLE_TOKENS = "Retro-futuristic noir comic style, Retro-Tech Noir, Syd Mead aesthetic, heavy black ink, high contrast, stark white, spot color glowing cyan #76F3FF, tech-noir atmosphere, intricate machinery, wires and CRT screens, masterpiece, detailed line art, hard shadows, consistent character design, anatomically correct hands, perfect anatomy";
 
-// Enhanced negative prompt to strictly ban bad anatomy and text
-const NEGATIVE_PROMPT = "disfigured, bad anatomy, dislocated limbs, extra limbs, missing limbs, floating limbs, mutated hands, extra fingers, missing fingers, fused fingers, malformed body, anatomical nonsense, bad proportions, uncoordinated body, amputation, head out of frame, cut off, split screen, text, words, speech bubble, thinking bubble, caption, label, sign, typography, letter, alphabet, watermark, logo, border, white frame, picture frame, margin, gutter, split panel, multiple panels, color gradient, soft lighting, orange, red, yellow, green, purple, sepia, greyscale, blurry, photograph, photorealistic, 3d render, distorted anatomy, elderly, wrinkles, old age, morphing clothes";
+// Enhanced negative prompt to strictly ban bad anatomy, text, AND EXTRA LIMBS
+const NEGATIVE_PROMPT = "disfigured, bad anatomy, dislocated limbs, extra limbs, missing limbs, floating limbs, mutated hands, extra fingers, missing fingers, fused fingers, malformed body, anatomical nonsense, bad proportions, uncoordinated body, amputation, head out of frame, cut off, split screen, text, words, speech bubble, thinking bubble, caption, label, sign, typography, letter, alphabet, watermark, logo, border, white frame, picture frame, margin, gutter, split panel, multiple panels, color gradient, soft lighting, orange, red, yellow, green, purple, sepia, greyscale, blurry, photograph, photorealistic, 3d render, distorted anatomy, elderly, wrinkles, old age, morphing clothes, three hands, three arms, more than two arms, extra legs, mutant, double body, clone, fused bodies";
 
 /**
  * Helper to match active characters to roster even if names are slightly different
@@ -217,7 +234,7 @@ const generatePageImage = async (
         const charData = findCharacterInRoster(charName, roster);
         const charDetails = charData ? charData.visual_details : "A shadowy figure";
         const finalName = charData ? charData.name.toUpperCase() : charName.toUpperCase();
-        characterContext += `- ${finalName}: ${charDetails}\n`;
+        characterContext += `- ${finalName}: ${charDetails} (Single individual)\n`;
       });
     }
 
@@ -235,6 +252,7 @@ const generatePageImage = async (
       4. COMPOSITION: Cinematic framing, comic book dynamic.
       5. SCALE & ANATOMY: Masterpiece, anatomically correct, perfect anatomy, accurate body proportions. Objects and characters must obey real-world physics and scale. No distorted heads or limbs.
       6. CHARACTER CONSISTENCY: If a character from the CAST list is in the ACTION, they MUST match their visual description exactly.
+      7. HANDS & LIMBS: Ensure all characters have exactly two arms and two hands. Hands must have 5 fingers. No extra limbs or hallucinations.
       
       CRITICAL: DO NOT INCLUDE ANY TEXT, SPEECH BUBBLES, OR CAPTIONS.
       
@@ -300,6 +318,9 @@ export const generateStorySession = async (
     const atmosphere = ATMOSPHERES[Math.floor(Math.random() * ATMOSPHERES.length)];
     const openingScenario = OPENING_SCENARIOS[Math.floor(Math.random() * OPENING_SCENARIOS.length)];
 
+    // Select random MacGuffin to avoid "Cassette Tape" repetition
+    const macguffin = MACGUFFINS[Math.floor(Math.random() * MACGUFFINS.length)];
+
     // Randomize Protagonist Attributes to ensure diversity
     const pGender = GENDERS[Math.floor(Math.random() * GENDERS.length)];
     const pAge = Math.floor(Math.random() * (45 - 20 + 1)) + 20; // 20 to 45
@@ -314,6 +335,7 @@ export const generateStorySession = async (
       1. ATMOSPHERE: ${atmosphere}.
       2. TIME: NIGHT (Always).
       3. OPENING SCENE TYPE: ${openingScenario}.
+      4. KEY ITEM: The mystery involves ${macguffin}.
       
       MANDATORY PROTAGONIST SPECS (DO NOT DEVIATE):
       - GENDER: ${pGender}
