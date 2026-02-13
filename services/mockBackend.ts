@@ -49,7 +49,7 @@ export const getMockSession = async (nonce: string) => {
     seed: nonce,
     story_pages: MOCK_STORY_PAGES,
     images: MOCK_STORY_PAGES.map((_, i) => getPlaceholder(i)),
-    credits_remaining: 4,
+    credits_remaining: 3, // Consumed one
     credits_reset_at: new Date(Date.now() + 86400000).toISOString()
   };
 };
@@ -70,7 +70,7 @@ export const getLocalProfile = (): UserProfile => {
     completedStories: [],
     total_cases: 0,
     current_streak: 0,
-    threads_remaining: 5,
+    threads_remaining: 4, // Default to 4
     cycle_start: now,
     cycle_end: now + (30 * 24 * 60 * 60 * 1000),
     notificationsEnabled: true,
