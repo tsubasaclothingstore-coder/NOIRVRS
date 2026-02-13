@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { getLocalProfile } from './services/ritualService';
 import { authService, AuthSession } from './services/authService';
 import { UserProfile } from './types';
@@ -99,5 +99,5 @@ const App: React.FC = () => {
   );
 };
 
-export { useAuth }; // Re-export for convenience if needed, though direct import is better
+export { useAuth };
 export default App;
