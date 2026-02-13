@@ -1,13 +1,13 @@
-
 import { UserProfile } from '../types';
 
 const STORAGE_KEY = 'noirvrs_guest_profile';
 
 const toBase64 = (str: string) => {
   try {
-    return btoa(str);
+    return window.btoa(str);
   } catch (e) {
-    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+    // Fallback for utf8 strings
+    return window.btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
       function toSolidBytes(match, p1) {
           return String.fromCharCode(parseInt(p1, 16));
       }));
@@ -15,6 +15,7 @@ const toBase64 = (str: string) => {
 };
 
 const getPlaceholder = (index: number) => {
+  // SVG Template
   const svg = `
   <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
     <rect width="100%" height="100%" fill="#0B0D10"/>
@@ -26,6 +27,7 @@ const getPlaceholder = (index: number) => {
     <rect x="412" y="600" width="200" height="2" fill="#76F3FF" opacity="0.5"/>
   </svg>
   `.trim().replace(/\s+/g, ' ');
+  
   return `data:image/svg+xml;base64,${toBase64(svg)}`;
 };
 
@@ -38,6 +40,7 @@ const MOCK_STORY_PAGES = [
 ];
 
 export const getMockSession = async (nonce: string) => {
+  // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 800));
 
   return {
@@ -51,6 +54,8 @@ export const getMockSession = async (nonce: string) => {
 };
 
 export const getLocalProfile = (): UserProfile => {
+  if (typeof window === 'undefined') return {} as any;
+  
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored) return JSON.parse(stored);
   const now = Date.now();
@@ -74,6 +79,8 @@ export const getLocalProfile = (): UserProfile => {
 };
 
 export const updateLocalProfile = (updates: Partial<UserProfile>): UserProfile => {
+  if (typeof window === 'undefined') return {} as any;
+
   const current = getLocalProfile();
   const updated = { ...current, ...updates };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
