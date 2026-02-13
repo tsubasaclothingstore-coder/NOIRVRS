@@ -22,7 +22,8 @@
     "lucide-react": "^0.454.0",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.5.4",
-    "luxon": "^3.5.0"
+    "luxon": "^3.5.0",
+    "@google/genai": "^0.1.0"
   },
   "devDependencies": {
     "@types/react": "~18.3.12",

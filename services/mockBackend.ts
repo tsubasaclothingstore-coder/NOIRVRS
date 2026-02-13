@@ -2,11 +2,12 @@ import { UserProfile } from '../types';
 
 const STORAGE_KEY = 'noirvrs_guest_profile';
 
+// Safe base64 encoding for browser environment
 const toBase64 = (str: string) => {
   try {
     return window.btoa(str);
   } catch (e) {
-    // Fallback for utf8 strings
+    // Fallback for utf8 strings causing Latin1 range issues
     return window.btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
       function toSolidBytes(match, p1) {
           return String.fromCharCode(parseInt(p1, 16));
