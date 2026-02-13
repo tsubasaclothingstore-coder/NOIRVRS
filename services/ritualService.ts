@@ -56,6 +56,7 @@ VISUAL INSTRUCTIONS:
 UNIQUENESS PROTOCOL:
 - Never repeat the same opening scene.
 - Vary the threat: Corruption, Super-powered thugs, Cults, Heists.
+- Vary the setting: Docks, High-rises, Subways, Abandoned Labs, Mansions, Markets.
 `;
 
 const RESPONSE_SCHEMA: Schema = {
@@ -85,6 +86,20 @@ const RESPONSE_SCHEMA: Schema = {
   },
   required: ["title", "pages", "character_description"]
 };
+
+// List of atmospheres to enforce variety
+const ATMOSPHERES = [
+  "Stifling Heatwave (Sweat, Haze)",
+  "Freezing Fog (Mist, Breath visible)",
+  "Dry & Dusty Wind (Gritty, Parched)",
+  "Oppressive Humidity (Damp, Sticky, No Rain)",
+  "Clear Cold Starlight (Sharp, crisp shadows)",
+  "Industrial Smog (Thick, Oily)",
+  "Underground / Subway (Claustrophobic, Artificial Light)",
+  "High Rise Penthouse (Sterile, Cold, Windy)",
+  "Heavy Snowfall (Silence, Whiteout)",
+  "Chemical Ash Fall (Grey, Flaking)"
+];
 
 export const normalizeImageSrc = (input: unknown): string | null => {
   if (!input) return null;
@@ -200,14 +215,21 @@ export const generateStorySession = async (
     
     if (signal?.aborted) throw new Error("ABORTED");
 
+    // Select random atmosphere
+    const atmosphere = ATMOSPHERES[Math.floor(Math.random() * ATMOSPHERES.length)];
+
     const storyPrompt = `
       Generate a new NOIRVRS story.
       Seed: ${nonce}
       Genre: Vigilante Thriller / Neo-Noir
-      Tone: Melancholy, gritty, tense, dramatic.
+      
+      MANDATORY SETTING CONSTRAINTS:
+      1. ATMOSPHERE: ${atmosphere}.
+      2. TIME: NIGHT (Always).
+      3. AVOID: Do NOT use "Rain" unless the chosen atmosphere explicitly mentions it.
       
       Constraint: GENERATE A NEW, UNIQUE PROTAGONIST (Age 20s-40s).
-      Constraint: GENERATE A UNIQUE OPENING SCENE.
+      Constraint: GENERATE A UNIQUE OPENING SCENE based on the atmosphere.
     `;
 
     const storyResponse = await ai.models.generateContent({
@@ -217,7 +239,7 @@ export const generateStorySession = async (
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
         responseSchema: RESPONSE_SCHEMA,
-        temperature: 0.9, 
+        temperature: 1.0, // Increased for more variety
       },
     });
 
