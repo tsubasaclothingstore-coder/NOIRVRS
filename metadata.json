@@ -1,0 +1,22 @@
+{
+  "name": "NOIRVRS",
+  "description": "A minimalist daily noir reading ritual.",
+  "slug": "noirvrs",
+  "version": "1.0.0",
+  "orientation": "portrait",
+  "userInterfaceStyle": "dark",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "expo": {
+    "name": "NOIRVRS",
+    "slug": "noirvrs",
+    "scheme": "noirvrs",
+    "version": "1.0.0",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ]
+  }
+}
