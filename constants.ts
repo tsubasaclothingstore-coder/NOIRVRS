@@ -14,7 +14,7 @@ export const PRICING = {
 };
 
 export const THREAD_LIMITS = {
-  free: 4,
+  free: 10,
   pro: 40,
   premium: 60,
 };

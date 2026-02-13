@@ -19,7 +19,7 @@ export const onUserCreate = functions
       uid: user.uid,
       email: user.email || "",
       plan: "free",
-      credits_remaining: 5,
+      credits_remaining: 10,
       credits_reset_at: nextMonth.toISOString(),
       last_request_at: null,
       created_at: now,
@@ -79,7 +79,7 @@ export const generateCase = functions
         seed: seed,
         story_pages: storyPages,
         images: images,
-        credits_remaining: 4, 
+        credits_remaining: 10, 
         credits_reset_at: new Date(Date.now() + 86400000).toISOString()
       };
 

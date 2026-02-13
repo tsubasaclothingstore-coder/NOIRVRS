@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { updateLocalProfile } from '../services/ritualService';
@@ -47,7 +46,7 @@ const Subscribe: React.FC = () => {
             <h3 className="text-lg font-medium">Free</h3>
             {currentTier === 'free' && <span className="text-[9px] uppercase tracking-widest text-[#76F3FF]">Active</span>}
           </div>
-          <p className="text-xs uppercase tracking-widest opacity-60 mb-2">4 threads / month</p>
+          <p className="text-xs uppercase tracking-widest opacity-60 mb-2">10 threads / month</p>
           <p className="text-xs italic opacity-30">Just enough to get hooked.</p>
         </div>
 

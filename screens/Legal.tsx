@@ -16,8 +16,9 @@ const Legal: React.FC = () => {
   return (
     <div className="px-8 pb-20 max-w-md mx-auto animate-in fade-in duration-500">
       
-      {/* Header / Nav */}
-      <div className="sticky top-20 bg-[#0A0A0A]/95 backdrop-blur-md pt-6 pb-6 mb-8 border-b border-white/5 z-10">
+      {/* Header / Nav - Sticky */}
+      {/* Adjusted top position to align with global header and solid background to prevent overlapping text visibility */}
+      <div className="sticky top-[60px] bg-[#0A0A0A] pt-6 pb-6 mb-8 border-b border-white/5 z-40">
         <button 
           onClick={() => navigate(-1)}
           className="text-[9px] uppercase tracking-[0.3em] opacity-40 hover:opacity-100 transition-all mb-6 block"
@@ -25,7 +26,7 @@ const Legal: React.FC = () => {
           ← Return
         </button>
 
-        <div className="flex w-full border border-white/10">
+        <div className="flex w-full border border-white/10 bg-[#0A0A0A]">
           <button 
             onClick={() => setActiveTab('terms')}
             className={`flex-1 py-3 text-[9px] uppercase tracking-[0.2em] font-bold transition-all ${activeTab === 'terms' ? 'bg-white text-black' : 'text-white/40 hover:text-white'}`}
@@ -43,7 +44,7 @@ const Legal: React.FC = () => {
       </div>
 
       {/* Content Area */}
-      <div className="space-y-12">
+      <div className="space-y-12 relative z-0">
         {activeTab === 'terms' ? (
           <section className="space-y-8">
              <div>

@@ -6,7 +6,7 @@ const Help: React.FC = () => {
 
   const faqs = [
     { q: "System Protocol", a: "NOIRVRS is a generative narrative engine. Each 'Thread' you spend synthesizes a unique, 5-page interactive noir comic in real-time. No two stories are ever the same." },
-    { q: "Thread Allocation", a: "Threads are decryption credits. One Thread = One Story. \n• Free: 4 Threads / month\n• Pro: 40 Threads / month\n• Premium: 60 Threads / month" },
+    { q: "Thread Allocation", a: "Threads are decryption credits. One Thread = One Story. \n• Free: 10 Threads / month\n• Pro: 40 Threads / month\n• Premium: 60 Threads / month" },
     { q: "Case Archives", a: "Completed cases are logged in your profile stats. The narrative is ephemeral; once a case is closed, the city moves on. Focus on the investigation at hand." },
     { q: "Visual Synthesis", a: "Imagery is generated live using neural interpretation of the text. Visual fidelity depends on signal strength." }
   ];

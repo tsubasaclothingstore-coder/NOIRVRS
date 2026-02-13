@@ -70,7 +70,7 @@ export const getLocalProfile = (): UserProfile => {
     completedStories: [],
     total_cases: 0,
     current_streak: 0,
-    threads_remaining: 4, // Default to 4
+    threads_remaining: 10, // Default to 10
     cycle_start: now,
     cycle_end: now + (30 * 24 * 60 * 60 * 1000),
     notificationsEnabled: true,

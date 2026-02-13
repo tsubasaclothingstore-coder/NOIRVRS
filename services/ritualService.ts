@@ -285,8 +285,10 @@ const mockFlow = async (nonce: string, now: number): Promise<RitualResponse> => 
       text: text
     }));
 
+    const profile = getLocalProfile();
+    // Consistent decrement logic for mock mode
     updateLocalProfile({
-      threads_remaining: response.credits_remaining,
+      threads_remaining: Math.max(0, (profile.threads_remaining || 0) - 1),
       cycle_end: new Date(response.credits_reset_at).getTime(),
       activeCaseId: response.case_id,
       last_generation_at: now
